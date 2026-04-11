@@ -1,0 +1,232 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model antreans {
+  id               BigInt                @id @default(autoincrement()) @db.UnsignedBigInt
+  session_id       BigInt                @db.UnsignedBigInt
+  nomor_antrian    String                @db.VarChar(10)
+  nomor_urut       Int                   @db.UnsignedSmallInt
+  kode_booking     String?               @db.VarChar(30)
+  nama_pasien      String?               @db.VarChar(150)
+  no_sep           String?               @db.VarChar(30)
+  no_bpjs          String?               @db.VarChar(20)
+  unit_asal_id     BigInt?               @db.UnsignedBigInt
+  jenis_resep      antreans_jenis_resep?
+  status           antreans_status       @default(waiting)
+  loket_id         BigInt?               @db.UnsignedBigInt
+  dilayani_oleh    BigInt?               @db.UnsignedBigInt
+  waktu_daftar     DateTime              @default(now()) @db.DateTime(0)
+  waktu_panggil    DateTime?             @db.DateTime(0)
+  waktu_selesai    DateTime?             @db.DateTime(0)
+  jumlah_panggilan         Int                   @default(0) @db.UnsignedTinyInt
+  bpjs_farmasi_registered  Boolean               @default(false)
+  bpjs_farmasi_at          DateTime?             @db.DateTime(0)
+  created_at       DateTime              @default(now()) @db.DateTime(0)
+  updated_at       DateTime              @default(now()) @db.DateTime(0)
+  deleted_at       DateTime?             @db.DateTime(0)
+  lokets           lokets?               @relation(fields: [loket_id], references: [id], map: "fk_antrean_loket")
+  users            users?                @relation(fields: [dilayani_oleh], references: [id], map: "fk_antrean_petugas")
+  queue_sessions   queue_sessions        @relation(fields: [session_id], references: [id], map: "fk_antrean_session")
+  units            units?                @relation(fields: [unit_asal_id], references: [id], map: "fk_antrean_unit_asal")
+  bpjs_tasks       bpjs_tasks[]
+
+  @@unique([session_id, kode_booking], map: "uq_antrean_booking_session")
+  @@unique([session_id, nomor_urut], map: "uq_antrean_urut_session")
+  @@index([dilayani_oleh], map: "fk_antrean_petugas")
+  @@index([unit_asal_id], map: "fk_antrean_unit_asal")
+  @@index([kode_booking], map: "idx_antrean_kode_booking")
+  @@index([loket_id], map: "idx_antrean_loket")
+  @@index([no_sep], map: "idx_antrean_no_sep")
+  @@index([session_id, status], map: "idx_antrean_session_status")
+  @@index([status, waktu_daftar], map: "idx_antrean_status_daftar")
+}
+
+model audit_logs {
+  id             BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  antrean_id     BigInt   @db.UnsignedBigInt
+  user_id        BigInt?  @db.UnsignedBigInt
+  aksi           String   @db.VarChar(30)
+  status_sebelum String?  @db.VarChar(20)
+  status_sesudah String?  @db.VarChar(20)
+  keterangan     String?  @db.Text
+  metadata       Json?
+  created_at     DateTime @default(now()) @db.DateTime(0)
+  users          users?   @relation(fields: [user_id], references: [id], map: "fk_audit_user")
+
+  @@index([aksi], map: "idx_audit_aksi")
+  @@index([antrean_id], map: "idx_audit_antrean")
+  @@index([user_id], map: "idx_audit_user")
+  @@index([created_at], map: "idx_audit_waktu")
+}
+
+model bpjs_tasks {
+  id              BigInt            @id @default(autoincrement()) @db.UnsignedBigInt
+  antrean_id      BigInt            @db.UnsignedBigInt
+  task_id         Int               @db.UnsignedTinyInt
+  kode_booking    String            @db.VarChar(30)
+  jenis_resep     String?           @db.VarChar(20)
+  waktu_event     DateTime          @db.DateTime(0)
+  request_payload Json
+  http_status     Int?              @db.UnsignedSmallInt
+  response_code   String?           @db.VarChar(10)
+  response_body   Json?
+  latency_ms      Int?              @db.UnsignedSmallInt
+  status          bpjs_tasks_status @default(pending)
+  error_message   String?           @db.Text
+  dikirim_oleh    BigInt?           @db.UnsignedBigInt
+  dikirim_at      DateTime          @default(now()) @db.DateTime(0)
+  antreans        antreans          @relation(fields: [antrean_id], references: [id], map: "fk_bpjs_antrean")
+  users           users?            @relation(fields: [dikirim_oleh], references: [id], map: "fk_bpjs_pengirim")
+
+  @@index([dikirim_oleh], map: "fk_bpjs_pengirim")
+  @@index([antrean_id, task_id], map: "idx_bpjs_antrean_task")
+  @@index([dikirim_at], map: "idx_bpjs_dikirim_at")
+  @@index([kode_booking], map: "idx_bpjs_kode_booking")
+  @@index([status], map: "idx_bpjs_status")
+}
+
+model display_configs {
+  id                         BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  unit_id                    BigInt   @unique(map: "uq_display_unit") @db.UnsignedBigInt
+  pesan_berjalan             String?  @db.Text
+  waktu_estimasi_non_racikan Int?     @default(30) @db.UnsignedTinyInt
+  waktu_estimasi_racikan     Int?     @default(60) @db.UnsignedTinyInt
+  logo_url                   String?  @db.VarChar(500)
+  config_json                Json?
+  updated_by                 BigInt?  @db.UnsignedBigInt
+  created_at                 DateTime @default(now()) @db.DateTime(0)
+  updated_at                 DateTime @default(now()) @db.DateTime(0)
+  units                      units    @relation(fields: [unit_id], references: [id], onDelete: Cascade, map: "fk_display_unit")
+  users                      users?   @relation(fields: [updated_by], references: [id], map: "fk_display_user")
+
+  @@index([updated_by], map: "fk_display_user")
+}
+
+model lokets {
+  id         BigInt     @id @default(autoincrement()) @db.UnsignedBigInt
+  unit_id    BigInt     @db.UnsignedBigInt
+  kode       String     @unique(map: "uq_lokets_kode") @db.VarChar(20)
+  nama       String     @db.VarChar(60)
+  is_active  Boolean    @default(true)
+  created_at DateTime   @default(now()) @db.DateTime(0)
+  updated_at DateTime   @default(now()) @db.DateTime(0)
+  deleted_at DateTime?  @db.DateTime(0)
+  antreans   antreans[]
+  units      units      @relation(fields: [unit_id], references: [id], map: "fk_lokets_unit")
+
+  @@index([unit_id], map: "idx_lokets_unit")
+}
+
+model queue_sessions {
+  id                                       BigInt                @id @default(autoincrement()) @db.UnsignedBigInt
+  unit_id                                  BigInt                @db.UnsignedBigInt
+  tanggal                                  DateTime              @db.Date
+  status                                   queue_sessions_status @default(aktif)
+  dibuka_oleh                              BigInt?               @db.UnsignedBigInt
+  ditutup_oleh                             BigInt?               @db.UnsignedBigInt
+  opened_at                                DateTime?             @db.DateTime(0)
+  closed_at                                DateTime?             @db.DateTime(0)
+  keterangan                               String?               @db.VarChar(255)
+  created_at                               DateTime              @default(now()) @db.DateTime(0)
+  updated_at                               DateTime              @default(now()) @db.DateTime(0)
+  antreans                                 antreans[]
+  users_queue_sessions_dibuka_olehTousers  users?                @relation("queue_sessions_dibuka_olehTousers", fields: [dibuka_oleh], references: [id], map: "fk_qs_dibuka")
+  users_queue_sessions_ditutup_olehTousers users?                @relation("queue_sessions_ditutup_olehTousers", fields: [ditutup_oleh], references: [id], map: "fk_qs_ditutup")
+  units                                    units                 @relation(fields: [unit_id], references: [id], map: "fk_qs_unit")
+
+  @@unique([unit_id, tanggal], map: "uq_session_unit_tanggal")
+  @@index([dibuka_oleh], map: "fk_qs_dibuka")
+  @@index([ditutup_oleh], map: "fk_qs_ditutup")
+  @@index([tanggal, status], map: "idx_session_tanggal_status")
+}
+
+model units {
+  id              BigInt           @id @default(autoincrement()) @db.UnsignedBigInt
+  kode            String           @unique(map: "uq_units_kode") @db.VarChar(20)
+  nama            String           @db.VarChar(100)
+  jenis           units_jenis      @default(poli)
+  lantai          Int?             @db.UnsignedTinyInt
+  display_token   String?          @unique(map: "uq_units_display_token") @db.VarChar(64)
+  is_active       Boolean          @default(true)
+  created_at      DateTime         @default(now()) @db.DateTime(0)
+  updated_at      DateTime         @default(now()) @db.DateTime(0)
+  deleted_at      DateTime?        @db.DateTime(0)
+  antreans        antreans[]
+  display_configs display_configs?
+  lokets          lokets[]
+  queue_sessions  queue_sessions[]
+  users           users[]
+
+  @@index([jenis, is_active], map: "idx_units_jenis_aktif")
+}
+
+model users {
+  id                                                BigInt            @id @default(autoincrement()) @db.UnsignedBigInt
+  nip                                               String?           @unique(map: "uq_users_nip") @db.VarChar(30)
+  username                                          String            @unique(map: "username_UNIQUE") @db.VarChar(255)
+  nama                                              String            @db.VarChar(100)
+  email                                             String?           @unique(map: "uq_users_email") @db.VarChar(150)
+  role                                              users_role        @default(asisten_apoteker)
+  unit_id                                           BigInt?           @db.UnsignedBigInt
+  password_hash                                     String            @db.VarChar(255)
+  is_active                                         Boolean           @default(true)
+  last_login_at                                     DateTime?         @db.DateTime(0)
+  created_at                                        DateTime          @default(now()) @db.DateTime(0)
+  updated_at                                        DateTime          @default(now()) @db.DateTime(0)
+  deleted_at                                        DateTime?         @db.DateTime(0)
+  antreans                                          antreans[]
+  audit_logs                                        audit_logs[]
+  bpjs_tasks                                        bpjs_tasks[]
+  display_configs                                   display_configs[]
+  queue_sessions_queue_sessions_dibuka_olehTousers  queue_sessions[]  @relation("queue_sessions_dibuka_olehTousers")
+  queue_sessions_queue_sessions_ditutup_olehTousers queue_sessions[]  @relation("queue_sessions_ditutup_olehTousers")
+  units                                             units?            @relation(fields: [unit_id], references: [id], map: "fk_users_unit")
+
+  @@index([unit_id], map: "fk_users_unit")
+  @@index([role, is_active], map: "idx_users_role_aktif")
+}
+
+enum queue_sessions_status {
+  aktif
+  ditutup
+}
+
+enum units_jenis {
+  poli
+  farmasi
+  igd
+  lain
+}
+
+enum users_role {
+  admin
+  apoteker
+  asisten_apoteker
+  operator
+  kiosk
+}
+
+enum antreans_jenis_resep {
+  Non_racikan @map("Non racikan")
+  Racikan
+  Tidak_ada   @map("Tidak ada")
+}
+
+enum antreans_status {
+  waiting
+  called
+  done
+  absent
+  batal
+}
+
+enum bpjs_tasks_status {
+  sukses
+  gagal
+  pending
+}

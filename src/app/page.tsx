@@ -1,10 +1,13 @@
-import Image from "next/image";
-import LoginCard from "./components/login/LoginCard";
+// Halaman login.
+// Proxy (src/proxy.ts) sudah menangani redirect user yang sudah login
+// ke landing page sesuai role, jadi di sini cukup render form saja.
+
+import { LoginForm } from "./components/login/LoginForm";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-slate-100 flex items-center justify-center p-6">
-      <LoginCard />
-    </main>
+    <div className="min-h-screen bg-[#F4F7FA] flex items-center justify-center px-6">
+      <LoginForm />
+    </div>
   );
 }
