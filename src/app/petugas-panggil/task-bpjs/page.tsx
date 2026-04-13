@@ -22,7 +22,7 @@
 // ─────────────────────────────────────────────────────────────
 
 import { useState } from "react";
-// import { useAuth }             from '@/app/hooks/useAuth'
+import { useAuth, useLogout } from "@/app/hooks/useAuth";
 import { useAntreanStream } from "@/app/hooks/useAntreanStream";
 import {
   useAntreanList,
@@ -64,8 +64,8 @@ export interface LogEntry {
 
 // ─────────────────────────────────────────────────────────────
 export default function TaskBpjsPage() {
-  //   const { unitId } = useAuth()
-  const unitId = 1;
+  const { unitId, nama } = useAuth();
+  const { logout } = useLogout();
   const [selectedNomor, setSelectedNomor] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [tanggal, setTanggal] = useState(""); // "" = hari ini, "YYYY-MM-DD" = historis
@@ -297,7 +297,24 @@ export default function TaskBpjsPage() {
               </a>
             </nav>
 
-            <Clock />
+            <div className="flex items-center gap-2">
+              <Clock />
+              {nama && (
+                <span className="hidden sm:inline text-xs font-medium text-slate-500 max-w-30 truncate">
+                  {nama}
+                </span>
+              )}
+              <button
+                onClick={logout}
+                className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                title="Logout"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                <span className="hidden sm:inline">Keluar</span>
+              </button>
+            </div>
           </div>
         </div>
       </header>

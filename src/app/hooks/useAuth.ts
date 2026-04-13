@@ -12,7 +12,8 @@
 //    userId, username, nama, role, unitId
 // ─────────────────────────────────────────────────────────────
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import type { SessionPayload } from "../lib/interfaces/sessionPayload";
 
 export type AuthUser = Omit<SessionPayload, "iat" | "exp"> & {
@@ -49,4 +50,23 @@ export function useAuth() {
     isLoading,
     isLoggedIn: !!data && !isError,
   };
+}
+
+// ─────────────────────────────────────────────────────────────
+//  useLogout
+//
+//  Memanggil POST /api/auth/logout → hapus cookie session di server,
+//  clear semua cache TanStack Query, lalu redirect ke halaman login (/).
+// ─────────────────────────────────────────────────────────────
+export function useLogout() {
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
+  async function logout() {
+    await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" });
+    queryClient.clear();
+    router.push("/");
+  }
+
+  return { logout };
 }

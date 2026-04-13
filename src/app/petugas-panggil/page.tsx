@@ -16,7 +16,7 @@
 // ─────────────────────────────────────────────────────────────
 
 import { useState, useCallback } from "react";
-import { useAuth } from "@/app/hooks/useAuth";
+import { useAuth, useLogout } from "@/app/hooks/useAuth";
 import { useAntreanStream } from "@/app/hooks/useAntreanStream";
 import {
   useAntreanList,
@@ -52,7 +52,8 @@ function speak(nomorAntrian: string) {
 
 // ─────────────────────────────────────────────────────────────
 export default function PetugasPanggilPage() {
-  const { userId, unitId, role, isLoading: authLoading } = useAuth();
+  const { userId, unitId, nama, role, isLoading: authLoading } = useAuth();
+  const { logout } = useLogout();
 
   // State lokal — hanya UI state (tab, search, modal, log)
   // Nomor "sedang dipanggil" TIDAK disimpan di sini; diturunkan dari
@@ -371,8 +372,25 @@ export default function PetugasPanggilPage() {
               )}
             </nav>
 
-            {/* Clock */}
-            <Clock />
+            {/* Clock + user + logout */}
+            <div className="flex items-center gap-2">
+              <Clock />
+              {nama && (
+                <span className="hidden sm:inline text-xs font-medium text-slate-500 max-w-30 truncate">
+                  {nama}
+                </span>
+              )}
+              <button
+                onClick={logout}
+                className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                title="Logout"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                <span className="hidden sm:inline">Keluar</span>
+              </button>
+            </div>
           </div>
         </div>
       </header>
