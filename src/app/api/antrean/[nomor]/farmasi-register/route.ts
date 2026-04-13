@@ -14,7 +14,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { antreanDal } from "@/app/lib/dal/Antrean.dal";
-import { requireSession, jsonError } from "@/app/lib/apiHelpers";
+import { requireSession, jsonError, parseTanggal, isToday } from "@/app/lib/apiHelpers";
 import { daftarFarmasiBpjs } from "@/app/lib/bpjsService";
 import type { BpjsFarmasiPayload } from "@/app/types/antrianTypes";
 
@@ -37,10 +37,16 @@ export async function POST(req: NextRequest, ctx: RouteContext) {
     const { nomor } = await ctx.params;
     const { unitId, userId } = auth.session;
 
-    const sesi = await antreanDal.findAktifSession(unitId);
-    if (!sesi) return jsonError("Sesi tidak ditemukan", 404);
+    const tanggal = parseTanggal(new URL(req.url).searchParams.get("tanggal"));
 
-    const antrean = await antreanDal.findAntreanByNomor(nomor, sesi.id);
+    let antrean;
+    if (tanggal && !isToday(tanggal)) {
+      antrean = await antreanDal.findAntreanByNomorAndDate(nomor, unitId, tanggal);
+    } else {
+      const sesi = await antreanDal.findAktifSession(unitId);
+      if (!sesi) return jsonError("Sesi tidak ditemukan", 404);
+      antrean = await antreanDal.findAntreanByNomor(nomor, sesi.id);
+    }
     if (!antrean) return jsonError("Antrean tidak ditemukan", 404);
 
     if (!antrean.kodeBooking) {

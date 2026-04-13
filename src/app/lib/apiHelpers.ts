@@ -51,6 +51,27 @@ export function jsonError(message: string, status: number) {
   return NextResponse.json({ message }, { status });
 }
 
+// ─────────────────────────────────────────────────────────────
+//  Date helpers — dipakai di route handler untuk filter tanggal
+// ─────────────────────────────────────────────────────────────
+
+// Parses "YYYY-MM-DD" → Date (midnight lokal).  Return null jika invalid.
+export function parseTanggal(raw: string | null): Date | null {
+  if (!raw) return null;
+  const d = new Date(`${raw}T00:00:00`);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+// True jika `date` (midnight lokal) jatuh pada hari kalender hari ini.
+export function isToday(date: Date): boolean {
+  const now = new Date();
+  return (
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate()
+  );
+}
+
 // Format: "{prefix}-{nomor padded 3 digit}", contoh: "F-001"
 // prefix diambil dari huruf pertama unit.kode (uppercase)
 export function generateNomorAntrian(unitKode: string, nomorUrut: number): string {

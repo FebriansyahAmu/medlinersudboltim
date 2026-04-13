@@ -10,7 +10,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { antreans_status } from "@prisma/client";
 import { antreanDal } from "@/app/lib/dal/Antrean.dal";
-import { requireSession, resolvePublicUnitId, jsonError, generateNomorAntrian } from "@/app/lib/apiHelpers";
+import { requireSession, resolvePublicUnitId, jsonError, generateNomorAntrian, parseTanggal, isToday } from "@/app/lib/apiHelpers";
+import { getSessionFromRequest } from "@/app/lib/sessions";
 import { publishEvent } from "@/app/lib/emitter";
 
 const VALID_STATUSES: antreans_status[] = [
@@ -41,12 +42,31 @@ export async function GET(req: NextRequest) {
   if (unitId === null) return jsonError("Unauthorized", 401);
 
   try {
-    const sesi = await antreanDal.findAktifSession(unitId);
+    const url = new URL(req.url);
+    const tanggal = parseTanggal(url.searchParams.get("tanggal"));
+    const isPast = tanggal !== null && !isToday(tanggal);
+
+    const authSession = await getSessionFromRequest(req);
+
+    const search = url.searchParams.get("search") ?? undefined;
+
+    if (isPast) {
+      // Past date — query langsung by waktu_daftar datetime range.
+      // Tidak lewat queue_sessions.tanggal (DATE) agar bebas dari
+      // masalah timezone UTC vs. lokal.
+      const list = await antreanDal.findAntreansByDate(unitId, tanggal!, { search });
+      return NextResponse.json(list);
+    }
+
+    // Today, petugas  → auto-create sesi jika belum ada
+    // Today, display  → hanya baca, tidak buat sesi baru
+    const sesi = authSession
+      ? await antreanDal.findOrCreateSession(unitId, authSession.userId)
+      : await antreanDal.findAktifSession(unitId);
+
     if (!sesi) return NextResponse.json([]);
 
-    const url = new URL(req.url);
     const status = parseStatusParam(url.searchParams.get("status"));
-    const search = url.searchParams.get("search") ?? undefined;
 
     const list = await antreanDal.findAntreans(sesi.id, { status, search });
     return NextResponse.json(list);

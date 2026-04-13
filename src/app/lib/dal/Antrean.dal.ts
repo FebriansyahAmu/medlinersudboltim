@@ -145,6 +145,108 @@ export class AntreanDal {
     return this.createSession(unitId, openedBy);
   }
 
+  // Ambil sesi untuk tanggal tertentu (tanpa peduli status — sesi lama bisa "selesai").
+  // Dipakai untuk tampilan data historis lintas tanggal.
+  async findSessionByDate(unitId: number, date: Date) {
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+
+    return this.db.queue_sessions.findFirst({
+      where: {
+        unit_id: BigInt(unitId),
+        tanggal: { gte: start, lt: end },
+      },
+      select: { id: true, unit_id: true, tanggal: true, status: true },
+    });
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  ANTREAN — HISTORICAL READ (bypass queue_sessions.tanggal)
+  //
+  //  queue_sessions.tanggal adalah kolom DATE; Prisma mengirimnya
+  //  sebagai UTC sehingga perbandingan bisa meleset ±1 hari
+  //  tergantung timezone server.  Solusi: query langsung melalui
+  //  waktu_daftar (DATETIME) yang selalu akurat sebagai timestamp.
+  // ─────────────────────────────────────────────────────────────
+
+  private dateRange(date: Date): { start: Date; end: Date } {
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+    return { start, end };
+  }
+
+  // List semua antrean milik unitId pada tanggal tertentu.
+  async findAntreansByDate(
+    unitId: number,
+    date: Date,
+    filters: { search?: string } = {},
+  ): Promise<Antrean[]> {
+    const { start, end } = this.dateRange(date);
+
+    const rows = await this.db.antreans.findMany({
+      where: {
+        deleted_at: null,
+        waktu_daftar: { gte: start, lt: end },
+        queue_sessions: { unit_id: BigInt(unitId) },
+        ...(filters.search
+          ? {
+              OR: [
+                { nama_pasien: { contains: filters.search } },
+                { nomor_antrian: { contains: filters.search } },
+                { kode_booking: { contains: filters.search } },
+              ],
+            }
+          : {}),
+      },
+      select: antreanSelect,
+      orderBy: { nomor_urut: "asc" },
+    });
+    return rows.map(mapAntrean);
+  }
+
+  // Detail satu antrean by nomor_antrian + unitId + tanggal.
+  async findAntreanByNomorAndDate(
+    nomorAntrian: string,
+    unitId: number,
+    date: Date,
+  ): Promise<Antrean | null> {
+    const { start, end } = this.dateRange(date);
+
+    const row = await this.db.antreans.findFirst({
+      where: {
+        nomor_antrian: nomorAntrian,
+        deleted_at: null,
+        waktu_daftar: { gte: start, lt: end },
+        queue_sessions: { unit_id: BigInt(unitId) },
+      },
+      select: antreanSelect,
+    });
+    return row ? mapAntrean(row) : null;
+  }
+
+  // Versi ringan untuk operasi mutasi historis (hanya id + status).
+  async findAntreanRawByNomorAndDate(
+    nomorAntrian: string,
+    unitId: number,
+    date: Date,
+  ) {
+    const { start, end } = this.dateRange(date);
+
+    return this.db.antreans.findFirst({
+      where: {
+        nomor_antrian: nomorAntrian,
+        deleted_at: null,
+        waktu_daftar: { gte: start, lt: end },
+        queue_sessions: { unit_id: BigInt(unitId) },
+      },
+      select: { id: true, status: true, nomor_antrian: true },
+    });
+  }
+
   // ── UNIT ────────────────────────────────────────────────────
 
   async findUnit(unitId: number) {

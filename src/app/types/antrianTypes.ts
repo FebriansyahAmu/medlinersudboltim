@@ -173,7 +173,8 @@ export type AntreanEvent =
 // ── Query params ──────────────────────────────────────────────
 export interface AntreanListParams {
   unitId: number;
-  token?: string; // display token untuk akses publik (tanpa session)
+  token?: string;    // display token untuk akses publik (tanpa session)
   status?: AntreanStatus | AntreanStatus[];
   search?: string;
+  tanggal?: string;  // "YYYY-MM-DD" — undefined/kosong = hari ini
 }

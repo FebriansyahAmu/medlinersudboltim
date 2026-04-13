@@ -68,6 +68,7 @@ export default function TaskBpjsPage() {
   const unitId = 1;
   const [selectedNomor, setSelectedNomor] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [tanggal, setTanggal] = useState(""); // "" = hari ini, "YYYY-MM-DD" = historis
   const [lastResponse, setLastResponse] = useState<LastResponse | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [pendingTaskId, setPendingTaskId] = useState<TaskId | null>(null);
@@ -77,23 +78,23 @@ export default function TaskBpjsPage() {
 
   // ── Queries ──────────────────────────────────────────────────
   const { data: allAntrian } = useAntreanList(
-    { unitId: unitId ?? 0 },
+    { unitId: unitId ?? 0, tanggal: tanggal || undefined },
     { enabled: !!unitId },
   );
 
   // Detail pasien terpilih — re-load fresh setiap pilih
-  const { data: detail } = useAntreanDetail(unitId ?? 0, selectedNomor, {
+  const { data: detail } = useAntreanDetail(unitId ?? 0, selectedNomor, tanggal || undefined, {
     enabled: !!selectedNomor && !!unitId,
   });
 
   // Status task BPJS pasien terpilih
-  const { data: taskStatus } = useBpjsTaskStatus(unitId ?? 0, selectedNomor, {
+  const { data: taskStatus } = useBpjsTaskStatus(unitId ?? 0, selectedNomor, tanggal || undefined, {
     enabled: !!selectedNomor && !!unitId,
   });
 
   // ── Mutations ─────────────────────────────────────────────────
-  const daftar = useDaftarFarmasiBpjs(unitId ?? 0);
-  const kirim = useKirimTaskBpjs(unitId ?? 0);
+  const daftar = useDaftarFarmasiBpjs(unitId ?? 0, tanggal || undefined);
+  const kirim = useKirimTaskBpjs(unitId ?? 0, tanggal || undefined);
 
   // ── Handler: daftarkan antrian ke BPJS Farmasi (farmasi/add) ──
   function handleDaftar() {
@@ -332,8 +333,13 @@ export default function TaskBpjsPage() {
           data={filtered}
           selectedNomor={selectedNomor}
           search={search}
+          tanggal={tanggal}
           onSelect={setSelectedNomor}
           onSearchChange={setSearch}
+          onTanggalChange={(val) => {
+            setTanggal(val);
+            setSelectedNomor(null); // reset pilihan saat tanggal berubah
+          }}
         />
 
         {/* Detail + Task panel */}

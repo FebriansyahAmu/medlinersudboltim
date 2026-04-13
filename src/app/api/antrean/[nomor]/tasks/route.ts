@@ -14,7 +14,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { antreanDal } from "@/app/lib/dal/Antrean.dal";
-import { requireSession, jsonError } from "@/app/lib/apiHelpers";
+import { requireSession, jsonError, parseTanggal, isToday } from "@/app/lib/apiHelpers";
 import { publishEvent } from "@/app/lib/emitter";
 import { kirimTaskBpjs } from "@/app/lib/bpjsService";
 import type { BpjsTaskPayload, TaskId, TaskStatus } from "@/app/types/antrianTypes";
@@ -36,10 +36,16 @@ export async function GET(req: NextRequest, ctx: RouteContext) {
     const { nomor } = await ctx.params;
     const unitId = auth.session.unitId;
 
-    const sesi = await antreanDal.findAktifSession(unitId);
-    if (!sesi) return NextResponse.json([]);
+    const tanggal = parseTanggal(new URL(req.url).searchParams.get("tanggal"));
 
-    const existing = await antreanDal.findAntreanRawByNomor(nomor, sesi.id);
+    let existing;
+    if (tanggal && !isToday(tanggal)) {
+      existing = await antreanDal.findAntreanRawByNomorAndDate(nomor, unitId, tanggal);
+    } else {
+      const sesi = await antreanDal.findAktifSession(unitId);
+      if (!sesi) return NextResponse.json([]);
+      existing = await antreanDal.findAntreanRawByNomor(nomor, sesi.id);
+    }
     if (!existing) return NextResponse.json([]);
 
     const tasks = await antreanDal.getBpjsTasks(existing.id);
@@ -74,10 +80,16 @@ export async function POST(req: NextRequest, ctx: RouteContext) {
       return jsonError("waktu (unix ms) tidak valid", 400);
     }
 
-    const sesi = await antreanDal.findAktifSession(unitId);
-    if (!sesi) return jsonError("Sesi tidak ditemukan", 404);
+    const tanggalPost = parseTanggal(new URL(req.url).searchParams.get("tanggal"));
 
-    const existing = await antreanDal.findAntreanRawByNomor(nomor, sesi.id);
+    let existing;
+    if (tanggalPost && !isToday(tanggalPost)) {
+      existing = await antreanDal.findAntreanRawByNomorAndDate(nomor, unitId, tanggalPost);
+    } else {
+      const sesi = await antreanDal.findAktifSession(unitId);
+      if (!sesi) return jsonError("Sesi tidak ditemukan", 404);
+      existing = await antreanDal.findAntreanRawByNomor(nomor, sesi.id);
+    }
     if (!existing) return jsonError("Antrean tidak ditemukan", 404);
 
     // Kirim ke BPJS (mock kalau env BPJS_API_URL kosong)

@@ -63,13 +63,14 @@ export const queryKeys = {
   list: (unitId: number, params?: Partial<AntreanListParams>) =>
     ["antrean", unitId, "list", params ?? {}] as const,
 
-  detail: (unitId: number, nomorAntrian: string) =>
-    ["antrean", unitId, "detail", nomorAntrian] as const,
+  // tanggal di key agar cache hari ini ≠ cache hari kemarin
+  detail: (unitId: number, nomorAntrian: string, tanggal?: string) =>
+    ["antrean", unitId, "detail", nomorAntrian, tanggal ?? "today"] as const,
 
   stats: (unitId: number) => ["antrean", unitId, "stats"] as const,
 
-  bpjsTask: (unitId: number, nomorAntrian: string) =>
-    ["antrean", unitId, "bpjs-task", nomorAntrian] as const,
+  bpjsTask: (unitId: number, nomorAntrian: string, tanggal?: string) =>
+    ["antrean", unitId, "bpjs-task", nomorAntrian, tanggal ?? "today"] as const,
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -91,14 +92,14 @@ async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
 //  QUERIES (READ)
 // ─────────────────────────────────────────────────────────────
 
-// GET /api/antrean?status=waiting,called&search=ahmad
+// GET /api/antrean?status=waiting,called&search=ahmad&tanggal=YYYY-MM-DD
 // Petugas: pakai session cookie (tidak perlu token/unitId di URL).
 // Display: pakai ?token=xxx (tidak punya session).
 export function useAntreanList(
   params: AntreanListParams,
   options?: Omit<UseQueryOptions<Antrean[]>, "queryKey" | "queryFn">,
 ) {
-  const { unitId, token, status, search } = params;
+  const { unitId, token, status, search, tanggal } = params;
 
   const query = new URLSearchParams();
   if (token) query.set("token", token);
@@ -107,9 +108,10 @@ export function useAntreanList(
     query.set("status", val);
   }
   if (search) query.set("search", search);
+  if (tanggal) query.set("tanggal", tanggal);
 
   return useQuery<Antrean[]>({
-    queryKey: queryKeys.list(unitId, { status, search }),
+    queryKey: queryKeys.list(unitId, { status, search, tanggal }),
     queryFn: () => apiFetch<Antrean[]>(`${base}?${query.toString()}`),
     staleTime: 30_000,
     refetchOnWindowFocus: false,
@@ -117,15 +119,17 @@ export function useAntreanList(
   });
 }
 
-// GET /api/antrean/:nomor
+// GET /api/antrean/:nomor?tanggal=YYYY-MM-DD
 export function useAntreanDetail(
   unitId: number,
   nomor: string | null,
+  tanggal?: string,
   options?: Omit<UseQueryOptions<Antrean>, "queryKey" | "queryFn">,
 ) {
+  const qs = tanggal ? `?tanggal=${tanggal}` : "";
   return useQuery<Antrean>({
-    queryKey: queryKeys.detail(unitId, nomor ?? ""),
-    queryFn: () => apiFetch<Antrean>(`${base}/${nomor}`),
+    queryKey: queryKeys.detail(unitId, nomor ?? "", tanggal),
+    queryFn: () => apiFetch<Antrean>(`${base}/${nomor}${qs}`),
     enabled: !!nomor,
     staleTime: 30_000,
     refetchOnWindowFocus: false,
@@ -150,15 +154,17 @@ export function useStatsHariIni(
   });
 }
 
-// GET /api/antrean/:nomor/tasks
+// GET /api/antrean/:nomor/tasks?tanggal=YYYY-MM-DD
 export function useBpjsTaskStatus(
   unitId: number,
   nomor: string | null,
+  tanggal?: string,
   options?: Omit<UseQueryOptions<BpjsTaskInfo[]>, "queryKey" | "queryFn">,
 ) {
+  const qs = tanggal ? `?tanggal=${tanggal}` : "";
   return useQuery<BpjsTaskInfo[]>({
-    queryKey: queryKeys.bpjsTask(unitId, nomor ?? ""),
-    queryFn: () => apiFetch<BpjsTaskInfo[]>(`${base}/${nomor}/tasks`),
+    queryKey: queryKeys.bpjsTask(unitId, nomor ?? "", tanggal),
+    queryFn: () => apiFetch<BpjsTaskInfo[]>(`${base}/${nomor}/tasks${qs}`),
     enabled: !!nomor,
     staleTime: 30_000,
     refetchOnWindowFocus: false,
@@ -412,40 +418,42 @@ export function useTandaiSelesai(unitId: number) {
   });
 }
 
-// POST /api/antrean/:nomor/farmasi-register
-export function useDaftarFarmasiBpjs(unitId: number) {
+// POST /api/antrean/:nomor/farmasi-register?tanggal=YYYY-MM-DD
+export function useDaftarFarmasiBpjs(unitId: number, tanggal?: string) {
   const qc = useQueryClient();
+  const qs = tanggal ? `?tanggal=${tanggal}` : "";
   return useMutation({
     mutationFn: (nomorAntrian: string) =>
       apiFetch<{ ok: boolean; latencyMs: number; responseCode: string; responseBody: object }>(
-        `${base}/${nomorAntrian}/farmasi-register`,
+        `${base}/${nomorAntrian}/farmasi-register${qs}`,
         { method: "POST" },
       ),
     onSettled: (_d, _e, nomorAntrian) => {
       // Refresh detail agar farmasiTerdaftar terupdate di UI
-      qc.invalidateQueries({ queryKey: queryKeys.detail(unitId, nomorAntrian) });
+      qc.invalidateQueries({ queryKey: queryKeys.detail(unitId, nomorAntrian, tanggal) });
       qc.invalidateQueries({ queryKey: queryKeys.list(unitId) });
     },
   });
 }
 
-// POST /api/antrean/:nomor/tasks
+// POST /api/antrean/:nomor/tasks?tanggal=YYYY-MM-DD
 interface KirimTaskInput {
   nomorAntrian: string;
   payload: BpjsTaskPayload;
 }
 
-export function useKirimTaskBpjs(unitId: number) {
+export function useKirimTaskBpjs(unitId: number, tanggal?: string) {
   const qc = useQueryClient();
+  const qs = tanggal ? `?tanggal=${tanggal}` : "";
   return useMutation({
     mutationFn: ({ nomorAntrian, payload }: KirimTaskInput) =>
       apiFetch<{ ok: boolean; latencyMs: number; responseCode: string }>(
-        `${base}/${nomorAntrian}/tasks`,
+        `${base}/${nomorAntrian}/tasks${qs}`,
         { method: "POST", body: JSON.stringify(payload) },
       ),
 
     onMutate: async ({ nomorAntrian, payload }) => {
-      const key = queryKeys.bpjsTask(unitId, nomorAntrian);
+      const key = queryKeys.bpjsTask(unitId, nomorAntrian, tanggal);
       await qc.cancelQueries({ queryKey: key });
       const snapshot = qc.getQueryData<BpjsTaskInfo[]>(key);
 
@@ -466,12 +474,12 @@ export function useKirimTaskBpjs(unitId: number) {
 
     onError: (_e, { nomorAntrian }, ctx) => {
       if (ctx?.snapshot)
-        qc.setQueryData(queryKeys.bpjsTask(unitId, nomorAntrian), ctx.snapshot);
+        qc.setQueryData(queryKeys.bpjsTask(unitId, nomorAntrian, tanggal), ctx.snapshot);
     },
 
     onSettled: (_d, _e, { nomorAntrian }) => {
       qc.invalidateQueries({
-        queryKey: queryKeys.bpjsTask(unitId, nomorAntrian),
+        queryKey: queryKeys.bpjsTask(unitId, nomorAntrian, tanggal),
       });
     },
   });
