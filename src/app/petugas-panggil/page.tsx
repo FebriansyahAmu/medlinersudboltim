@@ -43,11 +43,15 @@ function speak(nomorAntrian: string) {
   if (typeof window === "undefined" || !window.speechSynthesis) return;
   const parts = nomorAntrian.split("-");
   const text = `Nomor antrian Farmasi, ${parts[0]}, ${parseInt(parts[1] ?? "0")}. Silakan menuju loket farmasi.`;
-  window.speechSynthesis.cancel();
+  const synth = window.speechSynthesis;
+  synth.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.lang = "id-ID";
   u.rate = 0.85;
-  window.speechSynthesis.speak(u);
+  // Pilih voice Indonesia secara eksplisit agar tidak fallback ke default browser
+  const idVoice = synth.getVoices().find((v) => v.lang.startsWith("id"));
+  if (idVoice) u.voice = idVoice;
+  synth.speak(u);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -234,8 +238,14 @@ export default function PetugasPanggilPage() {
       onSuccess: () => {
         addLog(`Data dilengkapi: ${data.nomorAntrian} — ${data.namaPasien}`);
         setModalNomor(null);
-        // Langsung panggil setelah data dilengkapi
-        handlePanggilNomor(data.nomorAntrian);
+        // Data dipastikan lengkap dari form — langsung mutate tanpa cek cache
+        // (handlePanggilNomor tidak bisa dipakai karena allAntrian masih stale)
+        panggilNomor.mutate(data.nomorAntrian, {
+          onSuccess: (res) => {
+            setActiveTab("called");
+            addLog(`Memanggil ${res.nomorAntrian} — ${res.namaPasien ?? "—"}`);
+          },
+        });
       },
     });
   }

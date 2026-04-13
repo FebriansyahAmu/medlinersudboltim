@@ -35,11 +35,15 @@ function speak(nomorAntrian: string) {
   if (typeof window === "undefined" || !window.speechSynthesis) return;
   const parts = nomorAntrian.split("-");
   const text = `Perhatian. Nomor antrian Farmasi, ${parts[0]}, ${parseInt(parts[1] ?? "0")}. Silakan menuju loket farmasi.`;
-  window.speechSynthesis.cancel();
+  const synth = window.speechSynthesis;
+  synth.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.lang = "id-ID";
   u.rate = 0.84;
-  window.speechSynthesis.speak(u);
+  // Pilih voice Indonesia secara eksplisit agar tidak fallback ke default browser
+  const idVoice = synth.getVoices().find((v) => v.lang.startsWith("id"));
+  if (idVoice) u.voice = idVoice;
+  synth.speak(u);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -69,7 +73,7 @@ export default function DisplayPage() {
 
   // ── SSE — semua event diterima di sini ────────────────────
   const handleSSEEvent = useCallback((event: AntreanEvent) => {
-    if (event.type === "DIPANGGIL") {
+    if (event.type === "DIPANGGIL" || event.type === "PANGGIL_ULANG") {
       speak(event.data.nomorAntrian);
     }
   }, []);

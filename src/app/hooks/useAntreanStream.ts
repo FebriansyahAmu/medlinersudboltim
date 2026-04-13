@@ -144,6 +144,12 @@ export function useAntreanStream({
   useEffect(() => {
     if (!enabled) return;
 
+    // Flag untuk mencegah double-processing saat React StrictMode
+    // menjalankan effect dua kali (mount → cleanup → mount).
+    // EventSource lama bisa menerima event sebelum browser selesai
+    // memproses close() — flag ini mencegah handler lama tetap aktif.
+    let active = true;
+
     const url = token ? `/api/stream?token=${token}` : `/api/stream`;
 
     const es = new EventSource(url);
@@ -157,6 +163,7 @@ export function useAntreanStream({
     // Server mengirim event sebagai JSON dalam field `data`
     // Format: data: {"type":"DIPANGGIL","data":{...}}\n\n
     es.onmessage = (e: MessageEvent<string>) => {
+      if (!active) return;
       if (!e.data || e.data.trim() === "") return;
 
       try {
@@ -175,6 +182,7 @@ export function useAntreanStream({
     };
 
     return () => {
+      active = false;
       es.close();
       esRef.current = null;
       statusRef.current = "disconnected";
