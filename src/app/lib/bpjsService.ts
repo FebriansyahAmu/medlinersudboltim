@@ -14,7 +14,10 @@
 // ─────────────────────────────────────────────────────────────
 
 import { createHmac } from "node:crypto";
-import type { BpjsFarmasiPayload, BpjsTaskPayload } from "../types/antrianTypes";
+import type {
+  BpjsFarmasiPayload,
+  BpjsTaskPayload,
+} from "../types/antrianTypes";
 
 export interface BpjsCallResult {
   ok: boolean;
@@ -33,24 +36,24 @@ export interface BpjsCallResult {
 //    signature = Base64( HMAC-SHA256( BPJS_SECRET_KEY, message ) )
 // ─────────────────────────────────────────────────────────────
 function buildHeaders(): Record<string, string> {
-  const consId    = process.env.BPJS_CONS_ID    ?? "";
+  const consId = process.env.BPJS_CONS_ID ?? "";
   const secretKey = process.env.BPJS_SECRET_KEY ?? "";
-  const userKey   = process.env.BPJS_USER_KEY   ?? "";
+  const userKey = process.env.BPJS_USER_KEY ?? "";
 
   // Unix timestamp UTC dalam detik
   const timestamp = String(Math.floor(Date.now() / 1000));
 
-  const message   = `${consId}&${timestamp}`;
+  const message = `${consId}&${timestamp}`;
   const signature = createHmac("sha256", secretKey)
     .update(message)
     .digest("base64");
 
   return {
     "Content-Type": "application/json",
-    "X-cons-id":    consId,
-    "X-timestamp":  timestamp,
-    "X-signature":  signature,
-    "user_key":     userKey,
+    "X-cons-id": consId,
+    "X-timestamp": timestamp,
+    "X-signature": signature,
+    user_key: userKey,
   };
 }
 
@@ -59,18 +62,18 @@ function buildHeaders(): Record<string, string> {
 //  Harus dipanggil SEBELUM kirim task ID via updatewaktu
 // ─────────────────────────────────────────────────────────────
 export async function daftarFarmasiBpjs(
-  payload: BpjsFarmasiPayload
+  payload: BpjsFarmasiPayload,
 ): Promise<BpjsCallResult> {
-  const url   = process.env.BPJS_API_URL;
+  const url = process.env.BPJS_API_URL;
   const start = Date.now();
 
   if (!url) throw new Error("BPJS_API_URL belum di-set di environment");
 
   try {
     const res = await fetch(`${url}/antrean/farmasi/add`, {
-      method:  "POST",
+      method: "POST",
       headers: buildHeaders(),
-      body:    JSON.stringify(payload),
+      body: JSON.stringify(payload),
     });
 
     const body = await res.json().catch(() => null);
@@ -80,20 +83,20 @@ export async function daftarFarmasiBpjs(
       null;
 
     return {
-      ok:           res.ok && responseCode === "200",
-      httpStatus:   res.status,
+      ok: res.ok && responseCode === "200",
+      httpStatus: res.status,
       responseCode: responseCode ? String(responseCode) : null,
       responseBody: body,
-      latencyMs:    Date.now() - start,
+      latencyMs: Date.now() - start,
       errorMessage: res.ok ? null : `HTTP ${res.status}`,
     };
   } catch (err) {
     return {
-      ok:           false,
-      httpStatus:   null,
+      ok: false,
+      httpStatus: null,
       responseCode: null,
       responseBody: null,
-      latencyMs:    Date.now() - start,
+      latencyMs: Date.now() - start,
       errorMessage: err instanceof Error ? err.message : "Unknown error",
     };
   }
@@ -103,18 +106,18 @@ export async function daftarFarmasiBpjs(
 //  Kirim task ID ke BPJS Antrol (antrean/updatewaktu)
 // ─────────────────────────────────────────────────────────────
 export async function kirimTaskBpjs(
-  payload: BpjsTaskPayload
+  payload: BpjsTaskPayload,
 ): Promise<BpjsCallResult> {
-  const url   = process.env.BPJS_API_URL;
+  const url = process.env.BPJS_API_URL;
   const start = Date.now();
 
   if (!url) throw new Error("BPJS_API_URL belum di-set di environment");
 
   try {
     const res = await fetch(`${url}/antrean/updatewaktu`, {
-      method:  "POST",
+      method: "POST",
       headers: buildHeaders(),
-      body:    JSON.stringify(payload),
+      body: JSON.stringify(payload),
     });
 
     const body = await res.json().catch(() => null);
@@ -124,20 +127,20 @@ export async function kirimTaskBpjs(
       null;
 
     return {
-      ok:           res.ok && responseCode === "200",
-      httpStatus:   res.status,
+      ok: res.ok && responseCode === "200",
+      httpStatus: res.status,
       responseCode: responseCode ? String(responseCode) : null,
       responseBody: body,
-      latencyMs:    Date.now() - start,
+      latencyMs: Date.now() - start,
       errorMessage: res.ok ? null : `HTTP ${res.status}`,
     };
   } catch (err) {
     return {
-      ok:           false,
-      httpStatus:   null,
+      ok: false,
+      httpStatus: null,
       responseCode: null,
       responseBody: null,
-      latencyMs:    Date.now() - start,
+      latencyMs: Date.now() - start,
       errorMessage: err instanceof Error ? err.message : "Unknown error",
     };
   }

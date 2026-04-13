@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import type { Antrean } from "@/app/types/antrianTypes";
 
 const STATUS_MAP: Record<string, { bg: string; c: string; label: string }> = {
@@ -13,7 +16,7 @@ interface Props {
   data: Antrean[];
   selectedNomor: string | null;
   search: string;
-  tanggal: string;         // "" = hari ini
+  tanggal: string;         // "" = hari ini (query aktif)
   onSelect: (nomor: string) => void;
   onSearchChange: (val: string) => void;
   onTanggalChange: (val: string) => void;
@@ -28,7 +31,21 @@ export function PasienGrid({
   onSearchChange,
   onTanggalChange,
 }: Props) {
+  // draft = nilai di input, belum tentu di-apply ke query
+  const [draft, setDraft] = useState(todayStr);
+
+  // isHistoris = query aktif menunjuk tanggal lampau
   const isHistoris = !!tanggal && tanggal !== todayStr();
+
+  function handleCari() {
+    const isToday = draft === todayStr();
+    onTanggalChange(isToday ? "" : draft);
+  }
+
+  function handleHariIni() {
+    setDraft(todayStr());
+    onTanggalChange("");
+  }
 
   return (
     <div className="bg-white rounded-[18px] shadow-sm p-5">
@@ -56,22 +73,29 @@ export function PasienGrid({
         </h2>
 
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-          {/* Date picker */}
-          <div className="relative flex items-center">
+          {/* Date picker + tombol Cari */}
+          <div className="flex items-center gap-1.5">
             <input
               type="date"
-              value={tanggal || todayStr()}
+              value={draft}
               max={todayStr()}
-              onChange={(e) => onTanggalChange(e.target.value === todayStr() ? "" : e.target.value)}
+              onChange={(e) => setDraft(e.target.value)}
               className="pl-3 pr-2 py-2 text-xs border border-slate-200 rounded-xl
                          focus:outline-none focus:border-[#1D6FA4] focus:ring-2 focus:ring-[#1D6FA4]/10
                          text-slate-600"
             />
-            {isHistoris && (
+            <button
+              onClick={handleCari}
+              className="px-3 py-2 rounded-xl text-xs font-semibold text-white transition-colors"
+              style={{ background: "#1D6FA4" }}
+            >
+              Cari
+            </button>
+            {(isHistoris || tanggal !== "") && (
               <button
-                onClick={() => onTanggalChange("")}
+                onClick={handleHariIni}
                 title="Kembali ke hari ini"
-                className="ml-1.5 px-2 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                className="px-2 py-2 rounded-xl text-xs font-semibold transition-colors"
                 style={{ background: "#E8F3FB", color: "#1D6FA4" }}
               >
                 Hari ini
