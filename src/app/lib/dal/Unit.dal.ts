@@ -19,6 +19,7 @@ export interface UnitWithToken extends UnitPublicInfo {
   lantai: number | null;
   hasToken: boolean;
   tokenPreview: string | null; // 8 char pertama untuk preview
+  displayToken: string | null; // full token — hanya untuk server, jangan kirim ke client langsung
 }
 
 export const unitDal = {
@@ -46,6 +47,7 @@ export const unitDal = {
       lantai: r.lantai ?? null,
       hasToken: r.display_token !== null,
       tokenPreview: r.display_token ? String(r.display_token).slice(0, 8) + "..." : null,
+      displayToken: r.display_token ?? null,
     }));
   },
 

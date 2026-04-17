@@ -19,5 +19,10 @@ export async function GET(req: NextRequest) {
   }
 
   const units = await unitDal.getAllWithTokenStatus();
-  return NextResponse.json(units);
+  const origin = new URL(req.url).origin;
+  const response = units.map(({ displayToken, ...u }) => ({
+    ...u,
+    displayUrl: displayToken ? `${origin}/display?token=${displayToken}` : null,
+  }));
+  return NextResponse.json(response);
 }

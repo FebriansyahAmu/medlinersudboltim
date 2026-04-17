@@ -27,6 +27,7 @@ interface UnitRow {
   lantai: number | null;
   hasToken: boolean;
   tokenPreview: string | null;
+  displayUrl: string | null;
 }
 
 interface GenerateResult {
@@ -72,6 +73,7 @@ export default function PengaturanPage() {
 
   const [result, setResult] = useState<GenerateResult | null>(null);
   const [copied, setCopied] = useState(false);
+  const [copiedUnitId, setCopiedUnitId] = useState<number | null>(null);
   const [confirmRevoke, setConfirmRevoke] = useState<UnitRow | null>(null);
 
   // Guard admin — proxy sudah blok non-admin, ini safety extra di UI
@@ -237,6 +239,40 @@ export default function PengaturanPage() {
 
                   {/* Actions */}
                   <div className="flex items-center gap-2 shrink-0">
+                    {unit.hasToken && unit.displayUrl && (
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(unit.displayUrl!).then(() => {
+                            setCopiedUnitId(unit.id);
+                            setTimeout(() => setCopiedUnitId(null), 2000);
+                          });
+                        }}
+                        className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5"
+                        style={{
+                          background: copiedUnitId === unit.id ? "#E3F5EF" : "#EBF5FB",
+                          color: copiedUnitId === unit.id ? "#00875A" : "#1D6FA4",
+                          border: `1px solid ${copiedUnitId === unit.id ? "#A7F3D0" : "#BEE3F8"}`,
+                        }}
+                        title="Salin URL display"
+                      >
+                        {copiedUnitId === unit.id ? (
+                          <>
+                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                            Tersalin
+                          </>
+                        ) : (
+                          <>
+                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                              <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+                            </svg>
+                            Salin URL
+                          </>
+                        )}
+                      </button>
+                    )}
                     <button
                       onClick={() => generateMutation.mutate(unit.id)}
                       disabled={generateMutation.isPending}
