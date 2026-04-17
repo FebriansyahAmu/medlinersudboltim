@@ -71,6 +71,7 @@ export function TaskCardList({
   //   Semua task butuh farmasi terdaftar terlebih dahulu (farmasi/add)
   //   Task 6 butuh task 5 sukses, task 7 butuh task 6 sukses
   function isLocked(taskId: TaskId): boolean {
+    if (taskId === 99) return false;
     if (!antrean.farmasiTerdaftar) return true;
     if (taskId === 6) return statusMap.get(5)?.status !== "sukses";
     if (taskId === 7) return statusMap.get(6)?.status !== "sukses";
