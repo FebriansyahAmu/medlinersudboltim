@@ -116,8 +116,9 @@ export function QueueSidebar({ data, stats }: Props) {
                     fontFamily: "serif",
                     fontSize: 26,
                     lineHeight: 1,
-                    width: 60,
+                    width: 90,
                     flexShrink: 0,
+                    whiteSpace: "nowrap",
                     color: isCalled ? "#00875A" : isDim ? "#CBD5E1" : "#334155",
                   }}
                 >

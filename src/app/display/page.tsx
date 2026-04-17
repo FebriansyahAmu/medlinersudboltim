@@ -154,7 +154,7 @@ export default function DisplayPage() {
       <main
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 360px",
+          gridTemplateColumns: "1fr 420px",
           overflow: "hidden",
         }}
       >
