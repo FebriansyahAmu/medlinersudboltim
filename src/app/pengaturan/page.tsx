@@ -49,7 +49,9 @@ async function generateToken(unitId: number): Promise<GenerateResult> {
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error((body as { message?: string }).message ?? "Gagal generate token");
+    throw new Error(
+      (body as { message?: string }).message ?? "Gagal generate token",
+    );
   }
   return res.json();
 }
@@ -60,7 +62,9 @@ async function revokeToken(unitId: number): Promise<void> {
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error((body as { message?: string }).message ?? "Gagal mencabut token");
+    throw new Error(
+      (body as { message?: string }).message ?? "Gagal mencabut token",
+    );
   }
 }
 
@@ -118,8 +122,19 @@ export default function PengaturanPage() {
       <div className="min-h-screen bg-[#F4F7FA] flex items-center justify-center">
         <div className="flex items-center gap-3 text-slate-400">
           <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+            />
           </svg>
           <span className="text-sm">Memuat...</span>
         </div>
@@ -137,8 +152,19 @@ export default function PengaturanPage() {
               onClick={() => router.push("/petugas-panggil")}
               className="text-slate-400 hover:text-slate-600 transition-colors p-1 -ml-1"
             >
-              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              <svg
+                width="20"
+                height="20"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
             </button>
             <div>
@@ -161,16 +187,27 @@ export default function PengaturanPage() {
           className="rounded-2xl p-4 flex items-start gap-3"
           style={{ background: "#EBF5FB", border: "1px solid #BEE3F8" }}
         >
-          <svg width="18" height="18" fill="none" stroke="#1D6FA4" viewBox="0 0 24 24" strokeWidth={2} className="shrink-0 mt-0.5">
+          <svg
+            width="18"
+            height="18"
+            fill="none"
+            stroke="#1D6FA4"
+            viewBox="0 0 24 24"
+            strokeWidth={2}
+            className="shrink-0 mt-0.5"
+          >
             <circle cx="12" cy="12" r="10" />
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
           <div className="text-sm text-[#1D6FA4]">
-            <p className="font-semibold mb-0.5">Cara setup layar TV / Display</p>
+            <p className="font-semibold mb-0.5">
+              Cara setup layar TV / Display
+            </p>
             <p className="text-xs leading-relaxed opacity-80">
-              Generate token untuk setiap unit, lalu buka URL yang dihasilkan di browser layar TV.
-              Token bisa di-rotate kapan saja — URL lama langsung tidak berlaku.
+              Generate token untuk setiap unit, lalu buka URL yang dihasilkan di
+              browser layar TV. Token bisa di-rotate kapan saja — URL lama
+              langsung tidak berlaku.
             </p>
           </div>
         </div>
@@ -202,7 +239,9 @@ export default function PengaturanPage() {
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-slate-800">{unit.nama}</p>
+                    <p className="text-sm font-semibold text-slate-800">
+                      {unit.nama}
+                    </p>
                     <p className="text-xs text-slate-400 mt-0.5">
                       {unit.kode}
                       {unit.lantai ? ` · Lantai ${unit.lantai}` : ""}
@@ -213,7 +252,9 @@ export default function PengaturanPage() {
                     {unit.hasToken && (
                       <p className="text-xs text-slate-400 mt-1 font-mono">
                         Token aktif:{" "}
-                        <span className="text-[#00875A]">{unit.tokenPreview}</span>
+                        <span className="text-[#00875A]">
+                          {unit.tokenPreview}
+                        </span>
                       </p>
                     )}
                   </div>
@@ -242,30 +283,59 @@ export default function PengaturanPage() {
                     {unit.hasToken && unit.displayUrl && (
                       <button
                         onClick={() => {
-                          navigator.clipboard.writeText(unit.displayUrl!).then(() => {
-                            setCopiedUnitId(unit.id);
-                            setTimeout(() => setCopiedUnitId(null), 2000);
-                          });
+                          navigator.clipboard
+                            .writeText(unit.displayUrl!)
+                            .then(() => {
+                              setCopiedUnitId(unit.id);
+                              setTimeout(() => setCopiedUnitId(null), 2000);
+                            });
                         }}
                         className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5"
                         style={{
-                          background: copiedUnitId === unit.id ? "#E3F5EF" : "#EBF5FB",
-                          color: copiedUnitId === unit.id ? "#00875A" : "#1D6FA4",
+                          background:
+                            copiedUnitId === unit.id ? "#E3F5EF" : "#EBF5FB",
+                          color:
+                            copiedUnitId === unit.id ? "#00875A" : "#1D6FA4",
                           border: `1px solid ${copiedUnitId === unit.id ? "#A7F3D0" : "#BEE3F8"}`,
                         }}
                         title="Salin URL display"
                       >
                         {copiedUnitId === unit.id ? (
                           <>
-                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            <svg
+                              width="12"
+                              height="12"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              strokeWidth={2.5}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M5 13l4 4L19 7"
+                              />
                             </svg>
                             Tersalin
                           </>
                         ) : (
                           <>
-                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                            <svg
+                              width="12"
+                              height="12"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              strokeWidth={2}
+                            >
+                              <rect
+                                x="9"
+                                y="9"
+                                width="13"
+                                height="13"
+                                rx="2"
+                                ry="2"
+                              />
                               <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
                             </svg>
                             Salin URL
@@ -306,20 +376,31 @@ export default function PengaturanPage() {
       {/* ── Modal: hasil generate ── */}
       {result && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="bg-white rounded-[24px] p-7 w-full max-w-md shadow-2xl">
+          <div className="bg-white rounded-3xl p-7 w-full max-w-md shadow-2xl">
             <div className="flex items-center gap-3 mb-5">
               <div
                 className="w-10 h-10 rounded-xl flex items-center justify-center"
                 style={{ background: "#E3F5EF" }}
               >
-                <svg width="18" height="18" fill="none" stroke="#00875A" viewBox="0 0 24 24" strokeWidth={2.2}>
+                <svg
+                  width="18"
+                  height="18"
+                  fill="none"
+                  stroke="#00875A"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2.2}
+                >
                   <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
                   <polyline points="22 4 12 14.01 9 11.01" />
                 </svg>
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-800">Token Berhasil Dibuat</h3>
-                <p className="text-xs text-slate-400">Simpan URL berikut untuk dikonfigurasi di TV</p>
+                <h3 className="text-sm font-bold text-slate-800">
+                  Token Berhasil Dibuat
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Simpan URL berikut untuk dikonfigurasi di TV
+                </p>
               </div>
             </div>
 
@@ -334,7 +415,10 @@ export default function PengaturanPage() {
               <button
                 onClick={() => handleCopy(result.url)}
                 className="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all"
-                style={{ background: copied ? "#E3F5EF" : "#F1F5F9", color: copied ? "#00875A" : "#64748B" }}
+                style={{
+                  background: copied ? "#E3F5EF" : "#F1F5F9",
+                  color: copied ? "#00875A" : "#64748B",
+                }}
               >
                 {copied ? "✓ Tersalin" : "Salin"}
               </button>
@@ -342,13 +426,20 @@ export default function PengaturanPage() {
 
             <div
               className="rounded-xl p-3 mb-5 text-xs text-amber-700"
-              style={{ background: "#FFFBEB", border: "1px solid rgba(217,119,6,.2)" }}
+              style={{
+                background: "#FFFBEB",
+                border: "1px solid rgba(217,119,6,.2)",
+              }}
             >
-              ⚠ Token hanya ditampilkan sekali. Catat URL ini sebelum menutup dialog.
+              ⚠ Token hanya ditampilkan sekali. Catat URL ini sebelum menutup
+              dialog.
             </div>
 
             <button
-              onClick={() => { setResult(null); setCopied(false); }}
+              onClick={() => {
+                setResult(null);
+                setCopied(false);
+              }}
               className="w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
               style={{ background: "#00875A" }}
             >
@@ -361,22 +452,33 @@ export default function PengaturanPage() {
       {/* ── Modal: konfirmasi cabut ── */}
       {confirmRevoke && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="bg-white rounded-[24px] p-7 w-full max-w-sm shadow-2xl">
+          <div className="bg-white rounded-3xl p-7 w-full max-w-sm shadow-2xl">
             <div className="text-center mb-5">
               <div
                 className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4"
                 style={{ background: "#FEE2E2" }}
               >
-                <svg width="20" height="20" fill="none" stroke="#DC2626" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                <svg
+                  width="20"
+                  height="20"
+                  fill="none"
+                  stroke="#DC2626"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
                 </svg>
               </div>
               <h3 className="text-sm font-bold text-slate-800 mb-1">
                 Cabut Token — {confirmRevoke.nama}?
               </h3>
               <p className="text-xs text-slate-500 leading-relaxed">
-                Layar TV yang menggunakan token ini akan langsung tidak bisa mengakses data.
-                Aksi ini tidak bisa dibatalkan.
+                Layar TV yang menggunakan token ini akan langsung tidak bisa
+                mengakses data. Aksi ini tidak bisa dibatalkan.
               </p>
             </div>
 
