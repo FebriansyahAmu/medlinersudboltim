@@ -80,27 +80,12 @@ export function LoginForm() {
     >
       {/* Logo + judul */}
       <div className="text-center mb-11">
-        <div
-          className="w-13 h-13 rounded-2xl flex items-center justify-center mx-auto mb-5"
-          style={{
-            background: "#00875A",
-            boxShadow: "0 4px 14px rgba(0,135,90,.28)",
-          }}
-        >
-          <svg
-            width="22"
-            height="22"
-            fill="none"
-            stroke="#fff"
-            viewBox="0 0 24 24"
-            strokeWidth={2.2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
-            <polyline points="22 4 12 14.01 9 11.01" />
-          </svg>
-        </div>
+        <img
+          src="/medline-log.png"
+          alt="MedLine RSUD BOLTIM"
+          className="w-13 h-13 rounded-2xl object-contain mx-auto mb-5"
+          style={{ boxShadow: "0 4px 14px rgba(0,135,90,.28)" }}
+        />
         <p className="text-xs font-semibold uppercase tracking-[3px] text-[#00875A] mb-2.5">
           Selamat datang
         </p>

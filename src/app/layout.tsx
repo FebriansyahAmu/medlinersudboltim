@@ -16,6 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Antrean RSUD BOLTIM",
   description: "Website Antrian Farmasi RSUD BOLTIM",
+  icons: { icon: "/medline-log.png" },
 };
 
 export default function RootLayout({

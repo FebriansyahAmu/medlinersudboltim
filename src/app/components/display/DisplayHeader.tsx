@@ -47,24 +47,11 @@ export function DisplayHeader({ unitId }: Props) {
     <header className="bg-white border-b border-[#E8EEF4] p-5 px-20 flex items-center justify-between">
       {/* Kiri — logo RS */}
       <div className="flex items-center gap-3">
-        <div
-          className="w-9 h-9 rounded-[10px] flex items-center justify-center"
-          style={{ background: "#00875A" }}
-        >
-          <svg
-            width="18"
-            height="18"
-            fill="none"
-            stroke="#fff"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            viewBox="0 0 24 24"
-          >
-            <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
-            <polyline points="22 4 12 14.01 9 11.01" />
-          </svg>
-        </div>
+        <img
+          src="/medline-log.png"
+          alt="MedLine RSUD BOLTIM"
+          className="h-9 w-9 rounded-[10px] object-contain"
+        />
         <div>
           <div className="text-sm font-semibold text-[#334155] leading-tight">
             UPTD RSUD BOLTIM
