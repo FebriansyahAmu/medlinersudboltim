@@ -22,6 +22,7 @@
 // ─────────────────────────────────────────────────────────────
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth, useLogout } from "@/app/hooks/useAuth";
 import { useAntreanStream } from "@/app/hooks/useAntreanStream";
 import {
@@ -64,14 +65,21 @@ export interface LogEntry {
 
 // ─────────────────────────────────────────────────────────────
 export default function TaskBpjsPage() {
-  const { unitId, nama, role } = useAuth();
+  const { unitId, nama, role, isLoading: authLoading } = useAuth();
   const { logout } = useLogout();
+  const router = useRouter();
   const [selectedNomor, setSelectedNomor] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [tanggal, setTanggal] = useState(""); // "" = hari ini, "YYYY-MM-DD" = historis
   const [lastResponse, setLastResponse] = useState<LastResponse | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [pendingTaskId, setPendingTaskId] = useState<TaskId | null>(null);
+
+  // ── Guard admin ───────────────────────────────────────────────
+  if (!authLoading && role && role !== "admin") {
+    router.replace("/petugas-panggil");
+    return null;
+  }
 
   // ── SSE — update grid pasien realtime ────────────────────────
   useAntreanStream({ unitId: unitId ?? 0, enabled: !!unitId });
@@ -409,7 +417,10 @@ export default function TaskBpjsPage() {
               {/* Kiri — info + timeline */}
               <div className="lg:col-span-2 space-y-4">
                 <PasienInfo antrean={detail} />
-                <TaskTimeline taskStatus={taskStatus ?? []} />
+                <TaskTimeline
+                  taskStatus={taskStatus ?? []}
+                  farmasiTerdaftar={detail.farmasiTerdaftar}
+                />
               </div>
 
               {/* Kanan — task cards + response + log */}
