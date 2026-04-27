@@ -68,6 +68,14 @@ export default function PetugasPanggilPage() {
   const [search, setSearch] = useState("");
   const [modalNomor, setModalNomor] = useState<string | null>(null);
   const [logs, setLogs] = useState<{ time: string; msg: string }[]>([]);
+  const [confirmSelesai, setConfirmSelesai] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+
+  // ── Toast helper ─────────────────────────────────────────────
+  const showToast = useCallback((msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  }, []);
 
   // ── Log helper ───────────────────────────────────────────────
   const addLog = useCallback((msg: string) => {
@@ -218,12 +226,18 @@ export default function PetugasPanggilPage() {
   function handleSelesai(nomorAntrian?: string) {
     const nomor = nomorAntrian ?? currentNomor;
     if (!nomor) return;
+    setConfirmSelesai(nomor);
+  }
+
+  function handleConfirmSelesai() {
+    if (!confirmSelesai) return;
+    const nomor = confirmSelesai;
+    setConfirmSelesai(null);
     tandaiSelesai.mutate(nomor, {
       onSuccess: () => {
         addLog(`Selesai dilayani: ${nomor}`);
-        if (nomor === currentNomor) {
-          setActiveTab("waiting");
-        }
+        showToast(`Selesai dilayani: ${nomor}`);
+        if (nomor === currentNomor) setActiveTab("waiting");
       },
     });
   }
@@ -461,6 +475,64 @@ export default function PetugasPanggilPage() {
           onSave={handleLengkapiData}
           onClose={() => setModalNomor(null)}
         />
+      )}
+
+      {/* ── Konfirmasi Selesai ── */}
+      {confirmSelesai && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="bg-white rounded-3xl p-7 w-full max-w-sm shadow-2xl animate-fade-up">
+            <div className="text-center mb-5">
+              <div
+                className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                style={{ background: "#E3F5EF" }}
+              >
+                <svg width="22" height="22" fill="none" stroke="#00875A" viewBox="0 0 24 24" strokeWidth={2.2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-sm font-bold text-slate-800 mb-1">
+                Tandai Selesai Dilayani?
+              </h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Nomor antrian{" "}
+                <span className="font-mono font-bold text-slate-700">
+                  {confirmSelesai}
+                </span>{" "}
+                akan ditandai selesai dilayani.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setConfirmSelesai(null)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-slate-600 transition-all"
+                style={{ background: "#F1F5F9" }}
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleConfirmSelesai}
+                disabled={tandaiSelesai.isPending}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-all disabled:opacity-60"
+                style={{ background: "#00875A" }}
+              >
+                {tandaiSelesai.isPending ? "Memproses..." : "Ya, Selesai"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Toast sukses ── */}
+      {toast && (
+        <div
+          className="fixed top-5 right-5 z-50 animate-fade-up flex items-center gap-3 px-4 py-3 rounded-2xl shadow-lg text-sm font-semibold text-white"
+          style={{ background: "#00875A", minWidth: 220 }}
+        >
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5} className="shrink-0">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          {toast}
+        </div>
       )}
     </div>
   );
